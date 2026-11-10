@@ -24,6 +24,11 @@ stack_bound = "stack_bound.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.trace_report]
+# Requirement-ID prefixes whose impl/test coverage CI enforces (tools/trace_report.py).
+# Add an area's prefix when that area is implemented, e.g. "REQ-SB-0" for inputs and witnesses.
+gates = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "tools"]

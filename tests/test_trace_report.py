@@ -50,12 +50,31 @@ def test_proposed_adr_without_tags_is_pending_not_a_gap(tmp_path):
     assert {trace_report.state_of(model, r) for r in model.reqs.values()} == {"pending"}
 
 
-def test_accepted_adr_requires_impl_and_test(tmp_path):
+def test_accepted_adr_without_a_gate_is_open_not_a_gap(tmp_path):
+    model = trace_report.build_model(make_repo(tmp_path, status="accepted"))
+    assert model.gaps == []
+    assert {trace_report.state_of(model, r) for r in model.reqs.values()} == {"open"}
+
+
+def test_gated_area_requires_impl_and_test(tmp_path):
     root = make_repo(tmp_path, status="accepted")
+    (root / "pyproject.toml").write_text(
+        '[tool.trace_report]\ngates = ["REQ-DEMO-00"]\n', encoding="utf-8")
     (root / "src" / "demo.py").write_text(tag("impl", "REQ-DEMO-001"), encoding="utf-8")
-    kinds = gap_kinds(trace_report.build_model(root))
+    model = trace_report.build_model(root)
+    assert model.gates == ["REQ-DEMO-00"]
+    kinds = gap_kinds(model)
     assert ("uncovered", "REQ-DEMO-001") in kinds  # impl but no test
     assert ("uncovered", "REQ-DEMO-002") in kinds  # neither
+
+
+def test_gate_only_covers_its_prefix(tmp_path):
+    root = make_repo(tmp_path, status="accepted")
+    (root / "pyproject.toml").write_text(
+        '[tool.trace_report]\ngates = ["REQ-DEMO-002"]\n', encoding="utf-8")
+    kinds = gap_kinds(trace_report.build_model(root))
+    assert ("uncovered", "REQ-DEMO-002") in kinds
+    assert ("uncovered", "REQ-DEMO-001") not in kinds
 
 
 def test_covered_requirement_has_no_gap(tmp_path):

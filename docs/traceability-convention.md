@@ -41,11 +41,20 @@ It writes `docs/traceability.md` (generated, committed) and fails on any gap:
 | `no-trace` | a requirement with no `ADR-NNNN Dn` reference |
 | `bad-trace` | a requirement pointing to an ADR or decision that doesn't exist |
 | `dangling` | a tag naming an ID that doesn't exist |
-| `uncovered` | a requirement whose ADR is **accepted** but which lacks an `@impl` or a `@test` |
+| `uncovered` | a requirement in a **gated** area, with an accepted ADR, that lacks an `@impl` or a `@test` |
 
-A requirement whose decisions are all still *proposed* and has no tags is **pending**. That's
-reported, but it isn't a gap. Coverage is enforced from the moment a decision is accepted, so
-accepting an ADR is a commitment to implement and test it.
+**Table 1.** Requirement states.
+
+| State | Meaning | Gap? |
+|---|---|---|
+| covered | has an `@impl` and a `@test` | no |
+| open | its ADR is accepted, but it isn't built and tested yet | only inside a gated area |
+| pending | its ADRs are all still proposed | no |
+
+Accepting an ADR means the design is decided, not that it's built. Coverage is enforced **per area**
+through `gates` in `pyproject.toml` (`[tool.trace_report]`): add an area's prefix, e.g. `REQ-SB-1`
+for function pointers, once that area is implemented. From then on every requirement in it must stay
+covered.
 
 `python tools/trace_report.py --check` writes nothing and also fails if the committed matrix is stale.
 CI runs it on every push.

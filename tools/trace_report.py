@@ -13,16 +13,24 @@ Gaps (exit 1):
     no-trace        a requirement with no "ADR-NNNN Dn" reference
     bad-trace       a requirement tracing to an ADR or decision that doesn't exist
     dangling        a tag naming an ID that doesn't exist
-    uncovered       a requirement tracing to an *accepted* ADR with no impl or no test tag
+    uncovered       a requirement in a *gated* area, tracing to an accepted ADR, with no impl
+                    or no test tag
 
-A requirement whose ADRs are all still proposed and has no tags is "pending": reported, not a gap.
-Coverage is only enforced once the decision behind it is accepted.
+Requirement states:
+    covered   has an impl and a test tag
+    open      its ADR is accepted, but it isn't implemented and tested yet
+    pending   its ADRs are all still proposed
+
+Accepting an ADR means the design is decided, not that it is built. Coverage is enforced per area
+through the gates in pyproject.toml ([tool.trace_report] gates = ["REQ-SB-1", ...]): an "open"
+requirement whose ID starts with a gate prefix is a gap. Add a gate when an area is implemented.
 """
 from __future__ import annotations
 
 import argparse
 import re
 import sys
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -72,7 +80,16 @@ class Model:
     reqs: dict[str, Req] = field(default_factory=dict)
     adrs: dict[str, Adr] = field(default_factory=dict)
     tags: list[Tag] = field(default_factory=list)
+    gates: list[str] = field(default_factory=list)  # requirement-ID prefixes whose coverage is enforced
     gaps: list[tuple[str, str, str]] = field(default_factory=list)  # (kind, id, detail)
+
+
+def load_gates(root: Path) -> list[str]:
+    pyproject = root / "pyproject.toml"
+    if not pyproject.is_file():
+        return []
+    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    return sorted(data.get("tool", {}).get("trace_report", {}).get("gates", []))
 
 
 def _rel(root: Path, path: Path) -> str:
@@ -154,9 +171,10 @@ def check(model: Model) -> None:
         if not _id_exists(model, tag.target):
             model.gaps.append(("dangling", tag.target, tag.where))
     for req in model.reqs.values():
-        if state_of(model, req) == "uncovered":
+        gated = any(req.rid.startswith(g) for g in model.gates)
+        if gated and state_of(model, req) == "open":
             missing = [k for k in ("impl", "test") if not tags_for(model, req.rid, k)]
-            model.gaps.append(("uncovered", req.rid, "accepted, missing " + " and ".join(missing)))
+            model.gaps.append(("uncovered", req.rid, "gated, missing " + " and ".join(missing)))
 
 
 def tags_for(model: Model, rid: str, kind: str) -> list[Tag]:
@@ -169,11 +187,11 @@ def state_of(model: Model, req: Req) -> str:
     if has_impl and has_test:
         return "covered"
     accepted = any(model.adrs.get(a) and model.adrs[a].status == "accepted" for a, _ in req.traces)
-    return "uncovered" if accepted else "pending"
+    return "open" if accepted else "pending"
 
 
 def build_model(root: Path) -> Model:
-    model = Model()
+    model = Model(gates=load_gates(root))
     parse_adrs(root, model)
     parse_requirements(root, model)
     scan_tags(root, model)
@@ -196,8 +214,12 @@ def render(model: Model) -> str:
         "Convention: [traceability-convention.md](traceability-convention.md).",
         "",
         f"{len(model.reqs)} requirements · {states.count('covered')} covered · "
+        f"{states.count('open')} open (accepted, not built yet) · "
         f"{states.count('pending')} pending (decision not yet accepted) · "
-        f"{states.count('uncovered')} uncovered · {len(model.tags)} tags · {len(model.gaps)} gaps",
+        f"{len(model.tags)} tags · {len(model.gaps)} gaps",
+        "",
+        "Coverage enforced for: " + (", ".join(f"`{g}*`" for g in model.gates) or "no area yet")
+        + " (gates in `pyproject.toml`, `[tool.trace_report]`).",
         "",
         "## Decisions",
         "",

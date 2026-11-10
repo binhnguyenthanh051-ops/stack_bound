@@ -1,6 +1,6 @@
 # ADR-0001: stack_bound architecture
 
-**Status:** proposed · 2026-11-10 · requirements [REQ-SB-001…504](../requirements/stack_bound.md) · idea [idea.md](../idea.md)
+**Status:** accepted · 2026-11-10 · reviewed by the owner ([review record](../review/2026-11-10-ADR-0001.md)) · requirements [REQ-SB-001…504](../requirements/stack_bound.md) · idea [idea.md](../idea.md)
 
 **Summary.** The linked ELF is the referee, and two witnesses (the binary and the compiler) must agree.
 Function pointers are resolved by following values, and each stack is checked against a margin rule
@@ -322,13 +322,13 @@ flowchart LR
 
 ## 7. Open items
 
-**Table 11.** Before or alongside acceptance.
+**Table 11.** Open after acceptance.
 
 | Item | Next step |
 |---|---|
 | Spike only at `-Og` | Repeat at `-O2`/`-Os` in the corpus; count surviving call-site values |
 | Model and report schemas | Decide both (versioned) before the first plugin |
-| Coverage gate | Gate by requirement area, so accepting this ADR doesn't fail CI before code exists |
+| Coverage gates | None yet: add an area's prefix to `[tool.trace_report] gates` as it is implemented |
 | traveo ADR-0025 | Shrinks to the project's choices: profiles, margin, build-script gate, `LOG_EVT_TASK_STACK` |
 
 **Related:** [idea](../idea.md) · [How it reads Thumb-2](../how-it-reads-thumb2.md) ·
