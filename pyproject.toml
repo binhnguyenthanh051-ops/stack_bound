@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,8 @@ name = "stack-bound"
 version = "0.0.1"
 description = "Safe upper bound for every stack in an embedded firmware image"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "pyelftools>=0.31",   # ELF + DWARF reader (ADR-0001 D1, D13)

@@ -52,3 +52,8 @@ git submodule add <repository URL> tools/stack_bound
 
 Keep your project file, profiles and annotations in your own repository. This repository contains
 no project-specific content.
+
+## License
+
+[MIT](LICENSE): free for anyone to use, modify and redistribute, including commercially. Keep the
+copyright notice.
