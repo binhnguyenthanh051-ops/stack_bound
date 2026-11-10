@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stack-bound"
+version = "0.0.1"
+description = "Safe upper bound for every stack in an embedded firmware image"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyelftools>=0.31",   # ELF + DWARF reader (ADR-0001 D1, D13)
+    "capstone>=5.0",      # instruction decoding for the binary witness (ADR-0001 D2, D13)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+stack_bound = "stack_bound.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tools"]
