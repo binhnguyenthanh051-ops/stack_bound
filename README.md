@@ -12,7 +12,9 @@ behind every number, and refuses to guess.
 | Document | What it is |
 |---|---|
 | [docs/idea.md](docs/idea.md) | What the tool does and how it works: the product idea |
+| [docs/how-it-reads-thumb2.md](docs/how-it-reads-thumb2.md) | Real Thumb-2 examples: frames, function pointers, tasks |
 | [docs/adr/ADR-0001-architecture.md](docs/adr/ADR-0001-architecture.md) | The decisions, their alternatives, and a GCC 14 spike |
+| [docs/style-guide.md](docs/style-guide.md) | How every page is written: figure-led Markdown |
 | [docs/requirements/stack_bound.md](docs/requirements/stack_bound.md) | Normative requirements `REQ-SB-*` |
 | [docs/traceability.md](docs/traceability.md) | Generated matrix: requirement → decision → code → tests |
 | [docs/traceability-convention.md](docs/traceability-convention.md) | How the IDs and tags work |
