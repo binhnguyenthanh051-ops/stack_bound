@@ -35,6 +35,10 @@ def text(image: Image, project: Project, results: list[StackResult]) -> str:
     assumptions.append(f"switch frame {p.switch_fpu} B (FPU) / {p.switch_basic} B [profile {p.name}]: {p.source}")
     assumptions.append(f"stack alignment {p.stack_alignment} B [profile {p.name}]")
     assumptions.append(f"margin rule {project.margin_rule:.2f} [{project.margin_layer}]")
+    if image.not_linked:
+        # @impl REQ-SB-011 : the ignored compiler entries are counted in the report
+        assumptions.append(f"{len(image.not_linked)} compiler frame entries name functions not in the "
+                           f"image (removed by the linker), ignored")
     lines += ["", "  ->  direct call    ~>  function-pointer target (from the [[indirect]] list)", "",
               "assumptions:"] + [f"  - {a}" for a in assumptions]
     return "\n".join(lines) + "\n"

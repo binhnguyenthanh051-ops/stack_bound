@@ -337,5 +337,23 @@ flowchart LR
 | Coverage gates | None yet: add an area's prefix to `[tool.trace_report] gates` as it is implemented |
 | traveo ADR-0025 | Shrinks to the project's choices: profiles, margin, build-script gate, `LOG_EVT_TASK_STACK` |
 
+## 8. Addendum 2026-11-11: the first real image
+
+Slice 1 ran on its first consumer, traveo-body-domain Node A and Node B (MTB GCC 14.2.1, `-Og`,
+`--gc-sections`). The corpus links without `-ffunction-sections`, so three things a vendor SDK always
+does never appeared in it. Each one is now a rule under D3 (identity) or D9 (stacks).
+
+**Table 12.** What a real image added (0.1.2).
+
+| Seen | 0.1.1 did | Rule now | Req |
+|---|---|---|---|
+| 2002 `.su` entries name functions the linker removed (`--gc-sections`, an overridden weak default) | error: "stale compiler data?" | counted in the report, ignored: they can't be on a path. Stale data is REQ-SB-006's job (both witnesses) | REQ-SB-011 |
+| A header's `static inline` is emitted per unit; GCC names it by the unit (`wflash_port.c:Cy_TrigMux_SwTrigger`), DWARF by the header | caller not found | match a static on its compile unit (`DW_AT_name` of the CU), then on the declaring file | REQ-SB-003 |
+| The same inline survives in two units with one DWARF declaration | error: matches 2 functions | the `.su` file names the unit (`foo.su` ← `foo.c`); keep that unit's copy | REQ-SB-003 |
+| Three `static StackType_t s_stack[]` in one image | **silent**: the last one read won | `file.c:name`; a bare name matching two objects is an error | REQ-SB-207 |
+
+The last row broke rule 1 (no silent drops) and only a second consumer pattern exposed it. The first
+three never change a number; the fourth could have.
+
 **Related:** [idea](../idea.md) · [How it reads Thumb-2](../how-it-reads-thumb2.md) ·
 [requirements](../requirements/stack_bound.md) · [style guide](../style-guide.md)

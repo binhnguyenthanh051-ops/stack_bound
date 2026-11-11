@@ -8,7 +8,7 @@ matrix is [docs/traceability.md](../traceability.md).
 Hundreds group the areas: `0xx` inputs and witnesses, `1xx` function pointers, `15x` recursion,
 `2xx` stacks, `3xx` check and report, `4xx` configuration and extension, `5xx` quality.
 
-54 requirements.
+56 requirements.
 
 ## Coverage matrix
 
@@ -24,6 +24,7 @@ Hundreds group the areas: `0xx` inputs and witnesses, `1xx` function pointers, `
 | REQ-SB-008 | The compiler version in the ELF's `.comment` shall match the toolchain profile and shall select the parser dialect | ADR-0001 D2, ADR-0001 D13 | `test_toolchain_detect` |
 | REQ-SB-009 | A tail call shall contribute the larger of the caller's and callee's depth, not their sum | ADR-0001 D2 | `test_tail_call`, corpus |
 | REQ-SB-010 | Calls to noreturn functions (e.g. `__stack_chk_fail`) shall be counted with their frame | ADR-0001 D2 | `test_noreturn`, corpus |
+| REQ-SB-011 | Compiler-witness entries (frames and call-graph edges) for a function that is not in the linked image (removed by the linker) shall be ignored and counted in the report; an entry that matches more than one function shall be an analysis error | ADR-0001 D3 (addendum 2026-11-11) | `test_slice1` |
 | **Function pointers** ||||
 | REQ-SB-101 | Every indirect call site shall be identified by (function, instruction address), including indirect tail calls and writes to `pc` | ADR-0001 D5 | `test_sites`, corpus |
 | REQ-SB-102 | A site found by the binary witness and not reported by the compiler witness shall be an analysis error | ADR-0001 D5 | `test_sites` |
@@ -53,6 +54,7 @@ Hundreds group the areas: `0xx` inputs and witnesses, `1xx` function pointers, `
 | REQ-SB-204 | The main stack shall be analysed per image from the reset path, the vector table and `isr` registrations, against the size from the profile's linker symbols | ADR-0001 D9 | `test_main_stack` |
 | REQ-SB-205 | The interrupt chain shall be the sum over priority levels of the deepest handler per level plus one exception frame per nesting level; an unknown priority shall be its own level | ADR-0001 D9 | `test_main_stack` |
 | REQ-SB-206 | The main-stack combination (max, sum, or added to each task) shall follow the RTOS profile's interrupt model | ADR-0001 D9 | `test_main_stack` |
+| REQ-SB-207 | A stack named by a data symbol shall resolve to exactly one object; a static that is not unique shall be named `file:name`, and a missing or ambiguous symbol shall be an analysis error | ADR-0001 D9 (addendum 2026-11-11) | `test_slice1` |
 | **Check and report** ||||
 | REQ-SB-301 | A stack shall fail when `required > margin_rule × configured`; `margin_rule` shall default to 0.80 and a project shall be able to override it | ADR-0001 D10 | `test_check` |
 | REQ-SB-302 | The recommended size shall be the smallest meeting the rule, rounded up to the profile's alignment, also given in words | ADR-0001 D10 | `test_check` |

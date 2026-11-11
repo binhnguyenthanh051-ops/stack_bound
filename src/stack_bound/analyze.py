@@ -51,9 +51,19 @@ def attach_frames(image: Image, witness: Witness, project: Project) -> None:
         cands = image.by_decl(e.file, e.line, e.col, e.name)
         if not cands:
             cands = [f for f in image.by_name(e.name) if f.decl is None or f.decl[0] == e.file]
-        if len(cands) != 1:
-            what = "no function" if not cands else f"{len(cands)} functions"
-            errors.append(f"{e.where}: {e.name} matches {what} in the ELF (stale compiler data?)")
+        if cands and all(f.unit for f in cands):
+            # A static inline from a header has one copy per unit that emits it, all with the same
+            # declaration; the .su file names the unit (foo.su <- foo.c), so keep that unit's copy.
+            unit = e.where.rpartition(":")[0].removesuffix(".su")
+            cands = [f for f in cands if f.unit.rpartition(".")[0] == unit]
+        if not cands:
+            # @impl REQ-SB-011 : compiled but not linked (--gc-sections, an overridden weak
+            # definition): it can't be on any path, so it is counted, not an error. A function that
+            # IS in the image and gets no frame still fails later (REQ-SB-002).
+            image.not_linked.append(f"{e.file}:{e.name}")
+            continue
+        if len(cands) > 1:
+            errors.append(f"{e.where}: {e.name} matches {len(cands)} functions in the ELF")
             continue
         cands[0].frame, cands[0].frame_source = e.frame, f"gcc .su ({e.file}:{e.line})"
     for name, (nbytes, source) in project.frames.items():
@@ -70,13 +80,19 @@ def attach_frames(image: Image, witness: Witness, project: Project) -> None:
         raise AnalysisError(errors)
 
 
-def _resolve_title(image: Image, title: str) -> Function | None:
+def _candidates(image: Image, title: str) -> list[Function]:
     if ":" in title:                                    # GCC writes statics as "path:name"
         path, _, name = title.rpartition(":")
         base = path_base(path)
-        cands = [f for f in image.by_name(name) if f.decl and f.decl[0] == base]
-    else:
-        cands = [f for f in image.by_name(title) if f.is_global] or image.by_name(title)
+        # GCC names a static by the unit it was compiled in; a static inline from a header is
+        # declared in the header, so match the compile unit first, then the declaring file.
+        return ([f for f in image.by_name(name) if f.unit == base]
+                or [f for f in image.by_name(name) if f.decl and f.decl[0] == base])
+    return [f for f in image.by_name(title) if f.is_global] or image.by_name(title)
+
+
+def _resolve_title(image: Image, title: str) -> Function | None:
+    cands = _candidates(image, title)
     return cands[0] if len(cands) == 1 else None
 
 
@@ -84,10 +100,15 @@ def build_graph(image: Image, witness: Witness, project: Project) -> Graph:
     g = Graph()
     errors = []
     for e in witness.edges:
-        src = _resolve_title(image, e.source)
-        if src is None:
-            errors.append(f"call graph: caller '{e.source}' is not a function in the ELF")
+        srcs = _candidates(image, e.source)
+        if not srcs:
+            # @impl REQ-SB-011 : an edge out of a function the linker removed can't be on any path
+            image.not_linked_edges += 1
             continue
+        if len(srcs) > 1:
+            errors.append(f"call graph: caller '{e.source}' matches {len(srcs)} functions in the ELF")
+            continue
+        src = srcs[0]
         if e.target == INDIRECT:
             # (part of REQ-SB-101: compiler sites by source location; instruction addresses need the binary witness)
             g.sites.setdefault(src.addr, []).append(e.loc)
@@ -180,9 +201,11 @@ def check_task(image: Image, g: Graph, project: Project, task) -> StackResult:
         raise AnalysisError(f"task '{task.entry}': matches {len(fns)} functions in the ELF")
     depth, path = _walk(image, g, fns[0])
     if task.stack_symbol:
-        if task.stack_symbol not in image.objects:
-            raise AnalysisError(f"task '{task.entry}': stack symbol '{task.stack_symbol}' not in the ELF")
-        configured, src = image.objects[task.stack_symbol], f"ELF symbol {task.stack_symbol}"
+        try:
+            configured = image.object_size(task.stack_symbol)
+        except AnalysisError as e:
+            raise AnalysisError([f"task '{task.entry}': {m}" for m in e.messages]) from None
+        src = f"ELF symbol {task.stack_symbol}"
     else:
         configured, src = task.stack_bytes, "project file"
     prof = project.profile

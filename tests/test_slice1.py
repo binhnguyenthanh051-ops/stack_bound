@@ -122,7 +122,7 @@ def test_passing_project_exits_zero_and_records_its_inputs(tmp_path, capsys):
     text = 'margin_rule = 0.9\n' + text
     rc, out, _ = run_cli(tmp_path, text, capsys)
     assert rc == 0
-    assert "stack_bound 0.1.1 | corpus.elf (sha256 " in out and "profile cortex-m-freertos v1" in out
+    assert "stack_bound 0.1.2 | corpus.elf (sha256 " in out and "profile cortex-m-freertos v1" in out
     assert "margin rule 0.90 [project]" in out
     assert "indirect verify -> crypto_mac: g_oracle.mac = crypto_mac (crypto.c)" in out
     assert "switch frame 208 B (FPU) / 72 B [profile cortex-m-freertos]" in out
@@ -165,6 +165,52 @@ def test_unknown_keys_are_refused(tmp_path, capsys):
     # @test REQ-SB-402 : unknown keys in a project file are errors
     rc, _, err = run_cli(tmp_path, BASE.replace('stack = "s_stack_a"', 'stack = "s_stack_a"\nstak = 1'), capsys)
     assert rc == 2 and "unknown key(s) stak" in err
+
+
+def copy_witness(tmp_path, extra: dict[str, str]) -> Path:
+    """The corpus's .su/.ci files plus extra ones, in a fresh directory."""
+    import shutil
+    d = tmp_path / "su"
+    d.mkdir()
+    for p in list(OUT.glob("*.su")) + list(OUT.glob("*.ci")):
+        shutil.copy(p, d / p.name)
+    for name, text in extra.items():
+        (d / name).write_text(text, encoding="utf-8")
+    return d
+
+
+def test_compiler_entries_for_functions_the_linker_removed_are_counted_not_errors(tmp_path, capsys):
+    # @test REQ-SB-011 : entries for a function not in the image are ignored and counted
+    su = copy_witness(tmp_path, {
+        "gone.su": "../src/gone.c:3:6:gone_fn\t64\tstatic\n",
+        "gone.ci": 'graph: { title: "../src/gone.c"\n'
+                   'node: { title: "gone_fn" label: "gone_fn\\n../src/gone.c:3:6\\n64 bytes (static)" }\n'
+                   'edge: { sourcename: "gone_fn" targetname: "verify" }\n}\n'})
+    rc = main([str(OUT / "corpus.elf"), "--su", str(su), "--project", str(write_project(tmp_path, BASE))])
+    out = capsys.readouterr().out
+    assert rc == 1                                   # the same result as without the extra files
+    assert "1 compiler frame entries name functions not in the image (removed by the linker), ignored" in out
+
+
+def test_a_compiler_entry_matching_two_functions_is_still_an_error(tmp_path, capsys):
+    # @test REQ-SB-011 : an entry that matches more than one function is an analysis error
+    su = copy_witness(tmp_path, {
+        "amb.ci": 'graph: { title: "amb.c"\nedge: { sourcename: "helper" targetname: "verify" }\n}\n'})
+    rc = main([str(OUT / "corpus.elf"), "--su", str(su), "--project", str(write_project(tmp_path, BASE))])
+    assert rc == 2 and "caller 'helper' matches 2 functions in the ELF" in capsys.readouterr().err
+
+
+def test_a_stack_symbol_resolves_to_exactly_one_object(image):
+    # @test REQ-SB-207 : a unique name, or file:name for a static that is not unique; else an error
+    assert image.object_size("s_stack_a") == 1024
+    fake = elfread.Image(path=Path("x.elf"), sha256="", compiler="",
+                         objects={"s_stack": [("can_task.c", 1536), ("app_task.c", 1536), ("health_task.c", 512)]})
+    assert fake.object_size("health_task.c:s_stack") == 512
+    with pytest.raises(AnalysisError, match=r"matches 3 objects \(app_task.c, can_task.c, health_task.c\); "
+                                            r"write it as 'file.c:s_stack'"):
+        fake.object_size("s_stack")
+    with pytest.raises(AnalysisError, match="'nope.c:s_stack' not in the ELF"):
+        fake.object_size("nope.c:s_stack")
 
 
 def test_usage_errors_exit_3(tmp_path, capsys):

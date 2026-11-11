@@ -23,6 +23,7 @@ class Function:
     name: str
     is_global: bool
     decl: tuple[str, int, int] | None = None     # (file basename, line, column) from DWARF
+    unit: str | None = None                       # basename of the compile unit it was emitted in
     frame: int | None = None                      # bytes, from a witness or an annotation
     frame_source: str = ""
 
@@ -33,14 +34,29 @@ class Image:
     sha256: str
     compiler: str
     functions: dict[int, Function] = field(default_factory=dict)      # addr -> function
-    objects: dict[str, int] = field(default_factory=dict)             # data symbol -> size
+    objects: dict[str, list[tuple[str | None, int]]] = field(default_factory=dict)  # name -> [(file, size)]
     address_taken: set[int] = field(default_factory=set)
+    not_linked: list[str] = field(default_factory=list)              # compiler entries the linker removed
+    not_linked_edges: int = 0                                         # call-graph edges out of them
 
     def by_name(self, name: str) -> list[Function]:
         return [f for f in self.functions.values() if f.name == name]
 
     def by_decl(self, base: str, line: int, col: int, name: str) -> list[Function]:
         return [f for f in self.functions.values() if f.decl == (base, line, col) and f.name == name]
+
+    def object_size(self, spec: str) -> int:
+        """Size of a data object, by 'name' or, for a static that isn't unique, 'file.c:name'."""
+        # @impl REQ-SB-207 : a stack symbol that matches more than one object is an error, never a guess
+        file, _, name = spec.rpartition(":")
+        found = [(f, n) for f, n in self.objects.get(name, []) if not file or f == file]
+        if len(found) == 1:
+            return found[0][1]
+        if not found:
+            raise AnalysisError(f"stack symbol '{spec}' not in the ELF")
+        where = ", ".join(sorted(f or "(global)" for f, _ in found))
+        raise AnalysisError(f"stack symbol '{spec}' matches {len(found)} objects ({where}); "
+                            f"write it as 'file.c:{name}'")
 
 
 def load(path: Path) -> Image:
@@ -61,8 +77,12 @@ def load(path: Path) -> Image:
             raise AnalysisError([f"{path.name}: {m}" for m in missing])
 
         image = Image(path=path, sha256=hashlib.sha256(data).hexdigest(), compiler=_compiler(elf))
+        file = None                                 # local symbols follow their STT_FILE symbol
         for sym in symtab.iter_symbols():
             kind = sym["st_info"]["type"]
+            if kind == "STT_FILE":
+                file = path_base(sym.name) if sym.name else None
+                continue
             if sym["st_shndx"] == "SHN_UNDEF" or not sym.name:
                 continue
             if kind == "STT_FUNC":
@@ -71,7 +91,8 @@ def load(path: Path) -> Image:
                     addr=addr, size=sym["st_size"], name=sym.name,
                     is_global=sym["st_info"]["bind"] in ("STB_GLOBAL", "STB_WEAK")))
             elif kind == "STT_OBJECT":
-                image.objects[sym.name] = sym["st_size"]
+                local = sym["st_info"]["bind"] == "STB_LOCAL"
+                image.objects.setdefault(sym.name, []).append((file if local else None, sym["st_size"]))
         _attach_decls(elf, image)
         image.address_taken = _address_taken(elf, image)
     return image
@@ -91,12 +112,17 @@ def _attach_decls(elf: ELFFile, image: Image) -> None:
     for cu in dwarf.iter_CUs():
         lineprog = dwarf.line_program_for_CU(cu)
         files = _file_table(lineprog)
+        top = cu.get_top_DIE().attributes.get("DW_AT_name")
+        unit = path_base(top.value.decode() if isinstance(top.value, bytes) else str(top.value)) if top else None
         for die in cu.iter_DIEs():
             if die.tag != "DW_TAG_subprogram" or "DW_AT_low_pc" not in die.attributes:
                 continue
             addr = die.attributes["DW_AT_low_pc"].value & ~1
             fn = image.functions.get(addr)
-            if fn is None or "DW_AT_decl_line" not in die.attributes:
+            if fn is None:
+                continue
+            fn.unit = unit                  # a header's static inline is emitted in its includer's unit
+            if "DW_AT_decl_line" not in die.attributes:
                 continue
             fidx = die.attributes.get("DW_AT_decl_file")
             fname = files.get(fidx.value, "") if fidx is not None else ""
