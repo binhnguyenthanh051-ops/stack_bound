@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stack-bound"
-version = "0.1.2"
+version = "0.2.0"
 description = "Safe upper bound for every stack in an embedded firmware image"
 readme = "README.md"
 license = "MIT"
@@ -37,6 +37,7 @@ gates = [
     "REQ-SB-151", "REQ-SB-152",
     "REQ-SB-202", "REQ-SB-207",
     "REQ-SB-301", "REQ-SB-302", "REQ-SB-304", "REQ-SB-305", "REQ-SB-308", "REQ-SB-309",
+    "REQ-SB-311",                       # 0.2.0: HTML report
     "REQ-SB-402",
     "REQ-SB-501",
 ]

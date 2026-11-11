@@ -8,7 +8,7 @@ matrix is [docs/traceability.md](../traceability.md).
 Hundreds group the areas: `0xx` inputs and witnesses, `1xx` function pointers, `15x` recursion,
 `2xx` stacks, `3xx` check and report, `4xx` configuration and extension, `5xx` quality.
 
-56 requirements.
+57 requirements.
 
 ## Coverage matrix
 
@@ -65,6 +65,7 @@ Hundreds group the areas: `0xx` inputs and witnesses, `1xx` function pointers, `
 | REQ-SB-307 | A diff against a baseline JSON shall give each stack's change and the changed path | ADR-0001 D11 | `test_diff` |
 | REQ-SB-308 | Exit codes shall be `0` pass, `1` check failed, `2` analysis error, `3` usage error | ADR-0001 D11 | `test_cli` |
 | REQ-SB-309 | The report shall record the ELF's SHA-256, the tool version and each profile's name and version | ADR-0001 D11 | `test_report` |
+| REQ-SB-311 | The report shall also be available as one self-contained HTML page rendered from the JSON model: per stack a bar of required against configured with the margin line, the worst path frame by frame, and every assumption; it shall load nothing from the network and escape all text | ADR-0001 D11 (addendum 2026-11-11) | `test_report` |
 | REQ-SB-310 | Excluded path pairs shall never be combined by the walk, and every exclusion shall be listed with its reason | ADR-0001 D12 | `test_exclusions` |
 | **Configuration and extension** ||||
 | REQ-SB-401 | Profiles shall be TOML data, layered CPU → RTOS → toolchain → project; the report shall show the layer that set each value | ADR-0001 D4 | `test_profiles` |

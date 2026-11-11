@@ -233,7 +233,7 @@ OVERSIZED   if  margin > oversized_above                  warning, not failure
 |---|---|
 | Per stack | required · configured · margin · recommended · status · worst path with frames and edge provenance |
 | Assumptions | every annotation, exclusion and profile value, with its layer |
-| Formats | text · JSON (versioned schema, also the baseline) · SARIF |
+| Formats | text · JSON (versioned schema, also the baseline) · SARIF · HTML (from the JSON; addendum §9) |
 | Diff | per-stack change and the changed path, against a baseline JSON |
 | Reproducibility | ELF SHA-256 · tool version · profile names and versions |
 | Exit codes | `0` pass · `1` check failed · `2` analysis error · `3` usage error |
@@ -354,6 +354,40 @@ does never appeared in it. Each one is now a rule under D3 (identity) or D9 (sta
 
 The last row broke rule 1 (no silent drops) and only a second consumer pattern exposed it. The first
 three never change a number; the fourth could have.
+
+## 9. Addendum 2026-11-11: an HTML report
+
+The owner asked for the analysis as a page to read, not only as text. Every format renders one model,
+the JSON report (`stack_bound.report/1`): `model()` is the only code that reads the analysis, and the
+text, JSON and HTML renderers only format it. So the three can't disagree, and the HTML can be
+regenerated from a saved JSON.
+
+```mermaid
+flowchart LR
+  A["analysis<br/>results + project + ELF"] --> M["model()<br/>stack_bound.report/1"]
+  M --> T["text<br/>stdout"]
+  M --> J["--json FILE"]
+  M --> H["--html FILE<br/>one page, no script"]
+  classDef key fill:#2b2320,stroke:#2b2320,color:#f6efe6
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class M key
+  class H hot
+```
+
+**Figure 9.** One model, three renderings.
+
+The page shows each stack as a bar (path, then switch frame, against the configured size, with the
+margin line), each worst path as a waterfall (every frame starts where its caller's ends), and the
+assumptions. Inline CSS only: no JavaScript, no web fonts, nothing fetched, so a report opens offline on
+a bench PC and can be attached to a review record as is (REQ-SB-311).
+
+**Table 13.** Alternatives for the HTML.
+
+| Option | Verdict |
+|---|---|
+| Markdown report rendered by a docs tool (e.g. figure-docs) | *Rejected:* a second tool in the pipeline, and Mermaid loads from a CDN |
+| Charts from a JS library (inline or CDN) | *Rejected:* a script in a report people archive; CDN needs a network |
+| **HTML + CSS from the JSON model, no script** | **Chosen:** offline, diffable via its JSON, nothing to trust |
 
 **Related:** [idea](../idea.md) · [How it reads Thumb-2](../how-it-reads-thumb2.md) ·
 [requirements](../requirements/stack_bound.md) · [style guide](../style-guide.md)

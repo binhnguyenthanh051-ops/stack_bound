@@ -27,6 +27,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--su", type=Path, required=True, metavar="DIR",
                         help="directory with the build's .su and .ci files (GCC -fstack-usage -fcallgraph-info=su)")
     parser.add_argument("--project", type=Path, required=True, metavar="FILE", help="stack_bound.toml")
+    parser.add_argument("--json", type=Path, metavar="FILE", help="also write the report as JSON (schema "
+                        f"{report.SCHEMA})")
+    parser.add_argument("--html", type=Path, metavar="FILE", help="also write the report as one self-contained HTML page")
     args = parser.parse_args(argv)
     for p, kind in ((args.elf, "ELF"), (args.su, "--su directory"), (args.project, "project file")):
         if not p.exists():
@@ -42,5 +45,9 @@ def main(argv: list[str] | None = None) -> int:
         for m in e.messages:
             print(f"  - {m}", file=sys.stderr)
         return EXIT_ANALYSIS
-    sys.stdout.write(report.text(image, proj, results))
+    m = report.model(image, proj, results)
+    sys.stdout.write(report.text(m))
+    for path, render in ((args.json, report.json), (args.html, report.html)):
+        if path is not None:
+            path.write_text(render(m), encoding="utf-8")
     return EXIT_FAIL if any(r.status == "FAIL" for r in results) else EXIT_PASS
