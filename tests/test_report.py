@@ -68,6 +68,40 @@ def test_html_escapes_everything_it_shows(m):
     assert "a &lt;b&gt;bold&lt;/b&gt; &amp; claim" in page
 
 
+def test_every_format_says_what_is_not_analysed(m):
+    # @test REQ-SB-311 : the page states what this version doesn't analyse
+    assert m["not_analysed"] and m["not_analysed"][0].startswith("main stack (MSP)")
+    assert "not analysed: main stack (MSP)" in report.text(m)
+    assert "Not analysed by this version" in report.html(m) and "1 of 2 stacks fail" in report.html(m)
+    passing = copy.deepcopy(m)
+    for s in passing["stacks"]:
+        s["status"] = "ok"
+    assert "all 2 analysed stacks pass" in report.html(passing)
+
+
+def test_an_unwritable_output_is_a_usage_error_before_any_analysis(tmp_path, capsys):
+    # @test REQ-SB-308 : exit 3 for an output directory that doesn't exist, with nothing analysed
+    rc = main([str(OUT / "corpus.elf"), "--su", str(OUT), "--project", str(CORPUS / "corpus.toml"),
+               "--html", str(tmp_path / "no" / "such" / "r.html")])
+    out = capsys.readouterr()
+    assert rc == 3 and out.out == "" and "--html: directory not found" in out.err
+
+
+def test_an_analysis_error_replaces_an_old_report(tmp_path, capsys):
+    # @test REQ-SB-311 : on an analysis error the JSON and HTML say so, never keep an older result
+    j, h = tmp_path / "r.json", tmp_path / "r.html"
+    j.write_text('{"result": "pass"}', encoding="utf-8")
+    h.write_text("<p>all stacks pass</p>", encoding="utf-8")
+    bad = tmp_path / "bad.toml"
+    bad.write_text((CORPUS / "corpus.toml").read_text(encoding="utf-8").split("[[indirect]]")[0], encoding="utf-8")
+    rc = main([str(OUT / "corpus.elf"), "--su", str(OUT), "--project", str(bad), "--json", str(j), "--html", str(h)])
+    assert rc == 2
+    data = json.loads(j.read_text(encoding="utf-8"))
+    assert data["result"] == "analysis error" and any("has no binding" in e for e in data["errors"])
+    page = h.read_text(encoding="utf-8")
+    assert "analysis error: no result" in page and "all stacks pass" not in page and "has no binding" in page
+
+
 def test_cli_writes_json_and_html_next_to_the_text(tmp_path, capsys):
     j, h = tmp_path / "r.json", tmp_path / "r.html"
     rc = main([str(OUT / "corpus.elf"), "--su", str(OUT), "--project", str(CORPUS / "corpus.toml"),

@@ -35,6 +35,11 @@ def main(argv: list[str] | None = None) -> int:
         if not p.exists():
             print(f"stack_bound: {kind} not found: {p}", file=sys.stderr)
             return EXIT_USAGE
+    for p, kind in ((args.json, "--json"), (args.html, "--html")):
+        # @impl REQ-SB-308 : an output path that can't be written is a usage error, found before analysing
+        if p is not None and not p.resolve().parent.is_dir():
+            print(f"stack_bound: {kind}: directory not found: {p.resolve().parent}", file=sys.stderr)
+            return EXIT_USAGE
     try:
         proj = project.load(args.project)
         image = elfread.load(args.elf)
@@ -44,10 +49,23 @@ def main(argv: list[str] | None = None) -> int:
         print("stack_bound: analysis error, no result:", file=sys.stderr)
         for m in e.messages:
             print(f"  - {m}", file=sys.stderr)
+        _write(args, report.error_model(args.elf.name, e.messages))
         return EXIT_ANALYSIS
     m = report.model(image, proj, results)
     sys.stdout.write(report.text(m))
+    if not _write(args, m):
+        return EXIT_USAGE
+    return EXIT_FAIL if m["result"] == "fail" else EXIT_PASS
+
+
+def _write(args, m: dict) -> bool:
+    """Write the --json / --html files; False (with a message) if one can't be written."""
     for path, render in ((args.json, report.json), (args.html, report.html)):
-        if path is not None:
+        if path is None:
+            continue
+        try:
             path.write_text(render(m), encoding="utf-8")
-    return EXIT_FAIL if any(r.status == "FAIL" for r in results) else EXIT_PASS
+        except OSError as err:
+            print(f"stack_bound: can't write {path}: {err.strerror}", file=sys.stderr)
+            return False
+    return True
