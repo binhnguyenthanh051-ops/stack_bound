@@ -1,0 +1,2 @@
+../src/crypto.c:8:31:crypto_mac	520	static
+../src/crypto.c:17:31:unbound_target	8	static

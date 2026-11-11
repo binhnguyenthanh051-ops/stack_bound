@@ -1,0 +1,21 @@
+graph: { title: "../src/tasks.c"
+node: { title: "../src/tasks.c:helper" label: "helper\n../src/tasks.c:22:38\n32 bytes (static)" }
+node: { title: "task_r" label: "task_r\n../src/tasks.c:53:6\n8 bytes (static)" }
+node: { title: "fact" label: "fact\n../src/tasks.c:12:12" shape : ellipse }
+edge: { sourcename: "task_r" targetname: "fact" label: "../src/tasks.c:56:35" }
+node: { title: "task_m" label: "task_m\n../src/tasks.c:59:6\n8 bytes (static)" }
+node: { title: "asm_leaf" label: "asm_leaf\n../src/tasks.c:13:13" shape : ellipse }
+edge: { sourcename: "task_m" targetname: "asm_leaf" label: "../src/tasks.c:62:16" }
+node: { title: "verify" label: "verify\n../src/tasks.c:29:31\n24 bytes (static)" }
+node: { title: "__indirect_call" label: "Indirect Call Placeholder" shape : ellipse }
+edge: { sourcename: "verify" targetname: "__indirect_call" label: "../src/tasks.c:33:12" }
+node: { title: "task_a" label: "task_a\n../src/tasks.c:36:6\n16 bytes (static)" }
+edge: { sourcename: "task_a" targetname: "verify" label: "../src/tasks.c:41:28" }
+edge: { sourcename: "task_a" targetname: "../src/tasks.c:helper" label: "../src/tasks.c:41:56" }
+node: { title: "helper_b" label: "helper_b\n../src/tasks.c:11:12" shape : ellipse }
+edge: { sourcename: "task_a" targetname: "helper_b" label: "../src/tasks.c:41:88" }
+node: { title: "task_b" label: "task_b\n../src/tasks.c:45:6\n8 bytes (static)" }
+edge: { sourcename: "task_b" targetname: "verify" label: "../src/tasks.c:49:28" }
+node: { title: "Reset_Handler" label: "Reset_Handler\n../src/tasks.c:68:6\n8 bytes (static)" }
+edge: { sourcename: "Reset_Handler" targetname: "task_a" label: "../src/tasks.c:71:45" }
+}

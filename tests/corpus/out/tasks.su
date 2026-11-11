@@ -1,0 +1,7 @@
+../src/tasks.c:22:38:helper	32	static
+../src/tasks.c:53:6:task_r	8	static
+../src/tasks.c:59:6:task_m	8	static
+../src/tasks.c:29:31:verify	24	static
+../src/tasks.c:36:6:task_a	16	static
+../src/tasks.c:45:6:task_b	8	static
+../src/tasks.c:68:6:Reset_Handler	8	static

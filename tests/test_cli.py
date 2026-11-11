@@ -1,4 +1,4 @@
-"""Smoke tests for the placeholder CLI."""
+"""CLI smoke tests (the analysis itself is covered in test_slice1.py)."""
 import pytest
 
 from stack_bound import __version__
@@ -12,10 +12,7 @@ def test_version(capsys):
     assert __version__ in capsys.readouterr().out
 
 
-def test_no_elf_is_a_usage_error():
-    assert main([]) == EXIT_USAGE
-
-
-def test_analysis_not_implemented_yet(capsys):
-    assert main(["firmware.elf"]) == EXIT_USAGE
-    assert "not implemented" in capsys.readouterr().err
+def test_no_arguments_is_a_usage_error():
+    with pytest.raises(SystemExit) as exc:
+        main([])
+    assert exc.value.code == EXIT_USAGE

@@ -1,0 +1,15 @@
+# Project file for the test corpus: the passing baseline the tests vary.
+profile = "cortex-m-freertos"
+
+[[task]]
+entry = "task_a"
+stack = "s_stack_a"
+
+[[task]]
+entry = "task_b"
+stack = "s_stack_b"
+
+[[indirect]]
+function = "verify"
+targets = ["crypto_mac"]
+reason = "g_oracle.mac = crypto_mac (crypto.c)"

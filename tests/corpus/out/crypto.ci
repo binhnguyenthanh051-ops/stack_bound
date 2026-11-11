@@ -1,0 +1,4 @@
+graph: { title: "../src/crypto.c"
+node: { title: "crypto_mac" label: "crypto_mac\n../src/crypto.c:8:31\n520 bytes (static)" }
+node: { title: "unbound_target" label: "unbound_target\n../src/crypto.c:17:31\n8 bytes (static)" }
+}

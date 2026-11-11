@@ -4,8 +4,31 @@ A **safe upper bound for every stack** in an embedded firmware image: each RTOS 
 the interrupt stack of each core. It works from the build's own output, shows the deepest path
 behind every number, and refuses to guess.
 
-> **Status: design.** The architecture is proposed in
-> [ADR-0001](docs/adr/ADR-0001-architecture.md). No analysis is implemented yet.
+> **Status: 0.1.0, slice 1.** Architecture accepted in [ADR-0001](docs/adr/ADR-0001-architecture.md).
+> Works today: the ELF inventory and DWARF join, the GCC compiler witness (`.su`/`.ci`), function
+> pointers bound by a checked list, recursion refused, task stacks checked against the margin, and a
+> text report. Next: the binary witness (Thumb-2), value tracking, the interrupt stack, JSON/SARIF.
+
+## Run
+
+```bash
+python -m stack_bound build/app.elf --su build/ --project stack_bound.toml
+```
+
+```text
+STACK               REQUIRED  CONFIGURED   USED       RECOMMENDED  STATUS
+task task_a            768 B      1024 B    75%     960 B (240 w)  ok
+task task_b            760 B       256 B   297%     952 B (238 w)  FAIL
+
+worst path, task task_a (560 B + 208 B switch frame, stack from ELF symbol s_stack_a):
+     task_a 16 B
+   -> verify 24 B
+   ~> crypto_mac 520 B   [listed: g_oracle.mac = crypto_mac (crypto.c)]
+```
+
+Exit codes: `0` every stack passes, `1` a stack fails its margin, `2` the analysis can't give a safe
+bound (and says why), `3` usage error. The test corpus in `tests/corpus/` is a working example of the
+project file.
 
 ## Read first
 

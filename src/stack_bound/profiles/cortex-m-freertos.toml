@@ -1,0 +1,10 @@
+# Cortex-M4F / M7 with the FreeRTOS GCC port (ARM_CM4F / ARM_CM7 r0p1).
+name = "cortex-m-freertos"
+version = "1"
+source = "ARMv7-M Architecture Reference Manual B1.5.7 (exception entry, STKALIGN) + FreeRTOS GCC port.c xPortPendSVHandler"
+
+[frame]
+# On the task's own stack (PSP) when it is switched out, counted once per task.
+switch_fpu = 208      # 104 HW extended frame + 4 alignment + 64 (s16-s31) + 36 (r4-r11, lr)
+switch_basic = 72     # 32 HW basic frame + 4 alignment + 36 (r4-r11, lr)
+stack_alignment = 8

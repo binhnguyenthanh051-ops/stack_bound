@@ -1,0 +1,5 @@
+graph: { title: "../src/util.c"
+node: { title: "../src/util.c:helper" label: "helper\n../src/util.c:4:38\n160 bytes (static)" }
+node: { title: "helper_b" label: "helper_b\n../src/util.c:11:31\n8 bytes (static)" }
+edge: { sourcename: "helper_b" targetname: "../src/util.c:helper" label: "../src/util.c:13:12" }
+}

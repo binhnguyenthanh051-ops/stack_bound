@@ -1,0 +1,4 @@
+graph: { title: "../src/rec.c"
+node: { title: "fact" label: "fact\n../src/rec.c:2:31\n16 bytes (static)" }
+edge: { sourcename: "fact" targetname: "fact" label: "../src/rec.c:5:37" }
+}
