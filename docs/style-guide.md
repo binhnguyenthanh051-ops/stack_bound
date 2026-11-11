@@ -48,8 +48,25 @@ flowchart TB
 | Items × attributes | Table | (pipe table) |
 | Instructions to explain | Code block + step table | ` ```armasm ` + a table with one row per step |
 
-Keep a figure to **≤ 12 nodes**. Split a bigger one into an overview and a detail figure. Use at
-most two `classDef` styles, and only when the colour carries a meaning shown in the caption.
+Keep a figure to **≤ 12 nodes**. Split a bigger one into an overview and a detail figure.
+
+**Table 3.** Box emphasis. Boxes are cream with rust borders by default; mark at most two per figure.
+
+| Class | Looks | Use for | Markdown |
+|---|---|---|---|
+| (none) | cream fill, rust border | every ordinary box | — |
+| `key` | dark brown fill, light text | the central idea the figure is about | `class MOD key` |
+| `hot` | terracotta fill, white text | the result or the thing to notice | `class O hot` |
+
+Copy both definitions into the figure so it looks the same on GitHub and in Claude Docs; the HTML
+renderer swaps in its own light or dark colours:
+
+```text
+classDef key fill:#2b2320,stroke:#2b2320,color:#f6efe6
+classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+```
+
+Any other `classDef` must carry a meaning that the caption explains (for example a dashed path).
 
 ## 4. Code walkthroughs
 
@@ -61,7 +78,7 @@ instructions come from a real build, never made up.
 10086746  sub    sp, #100                    @ locals → 136 B
 ```
 
-**Table 3.** Example step table.
+**Table 4.** Example step table.
 
 | Step | Instruction | What the tool learns |
 |---|---|---|

@@ -47,12 +47,16 @@ The same rule gives `secoc_rx_process` 7 × 4 + 36 = **64 B**, again equal to GC
 ```
 
 ```mermaid
-flowchart RL
+flowchart TB
   BLX["blx fp<br/>0x10086778"] --> FP["fp = *(r3 + 0)"]
   FP --> R3["r3 = *(r7 + 0)"]
   R3 --> R7["r7 = r0<br/>argument 1"]
   R7 --> BIND["binding: arg 1 → member 0 → slot 0<br/>DWARF names the struct type"]
   BIND --> TGT["target: crypto_mac<br/>568 B frame"]
+  classDef key fill:#2b2320,stroke:#2b2320,color:#f6efe6
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class BLX key
+  class TGT hot
 ```
 
 **Figure 2.** Tracing the pointer backwards, from the call to a struct member the binding rule can

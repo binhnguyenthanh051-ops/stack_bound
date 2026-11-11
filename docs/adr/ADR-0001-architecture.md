@@ -41,6 +41,10 @@ flowchart TB
   WIT --> MOD
   PRO --> MOD
   MOD --> SITE --> TIER --> VAL --> REC --> STK --> CHK --> REP
+  classDef key fill:#2b2320,stroke:#2b2320,color:#f6efe6
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class MOD key
+  class REP hot
 ```
 
 **Figure 1.** Where each decision sits in the pipeline. D13 (implementation), D14 (validation) and D15
@@ -124,6 +128,8 @@ flowchart TB
   A["All functions in the ELF"] --> B["Address-taken: tier 5"]
   B --> C["Type-compatible: tier 4"]
   C --> D["Bound by value: tiers 1–3<br/>const data · .data · value tracking"]
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class D hot
 ```
 
 **Figure 4.** The funnel. Tiers 1–3 follow values, so `void *` casts don't break them.

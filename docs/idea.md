@@ -1,6 +1,6 @@
 # stack_bound: the idea
 
-**Status:** draft for review · 2026-11-10 · decisions in [ADR-0001](adr/ADR-0001-architecture.md)
+**Status:** reviewed · 2026-11-10 · decisions in [ADR-0001](adr/ADR-0001-architecture.md) (accepted)
 
 **Summary.** `stack_bound` computes a safe upper bound for every stack in a firmware image (each
 RTOS task, and the interrupt stack of each core) from the build's own output. It shows the deepest
@@ -67,6 +67,10 @@ flowchart TB
   R --> W["Walk<br/>deepest path per entry"]
   W --> K["Check<br/>+ platform frames vs size"]
   K --> O["Report<br/>text · JSON · SARIF · diff"]
+  classDef key fill:#2b2320,stroke:#2b2320,color:#f6efe6
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class MOD key
+  class O hot
 ```
 
 **Figure 3.** The pipeline. Everything below the model is toolchain-neutral.
@@ -100,6 +104,8 @@ flowchart TB
   A["All functions in the ELF"] --> B["Address-taken<br/>address appears in data or code"]
   B --> C["Type-compatible<br/>DWARF prototype matches"]
   C --> D["Bound targets<br/>struct member · vtable · registration · list"]
+  classDef hot fill:#b35a3a,stroke:#b35a3a,color:#ffffff
+  class D hot
 ```
 
 **Figure 5.** The funnel. Each step narrows the candidates; the binary sets the outer limit no
