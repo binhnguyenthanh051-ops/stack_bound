@@ -4,7 +4,7 @@ Strict means an unknown construct is an error, never skipped (REQ-SB-501).
 """
 from __future__ import annotations
 
-import os
+from stack_bound.paths import base as path_base
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,7 +50,7 @@ def parse_su(text: str, where: str) -> list[SuEntry]:
         if m["qual"] != "static":
             raise AnalysisError(f"{where}:{n}: {m['name']} has a '{m['qual']}' frame (VLA or alloca): "
                                 "no static bound")
-        out.append(SuEntry(os.path.basename(m["file"]), int(m["line"]), int(m["col"]), m["name"],
+        out.append(SuEntry(path_base(m["file"]), int(m["line"]), int(m["col"]), m["name"],
                            int(m["bytes"]), f"{where}:{n}"))
     return out
 

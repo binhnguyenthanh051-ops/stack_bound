@@ -6,7 +6,7 @@ Slice 1: compiler witness only (GCC .su/.ci); function pointers resolved by a ch
 from __future__ import annotations
 
 import math
-import os
+from stack_bound.paths import base as path_base
 from dataclasses import dataclass, field
 
 from stack_bound.elfread import Function, Image
@@ -73,7 +73,7 @@ def attach_frames(image: Image, witness: Witness, project: Project) -> None:
 def _resolve_title(image: Image, title: str) -> Function | None:
     if ":" in title:                                    # GCC writes statics as "path:name"
         path, _, name = title.rpartition(":")
-        base = os.path.basename(path)
+        base = path_base(path)
         cands = [f for f in image.by_name(name) if f.decl and f.decl[0] == base]
     else:
         cands = [f for f in image.by_name(title) if f.is_global] or image.by_name(title)

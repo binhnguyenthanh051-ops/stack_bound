@@ -29,6 +29,12 @@ def image():
     return elfread.load(OUT / "corpus.elf")
 
 
+@pytest.mark.parametrize("path", ["C:\\work\\src\\a.c", "/work/src/a.c", "../src/a.c", "a.c", "C:/w\\src/a.c"])
+def test_paths_from_any_host_reduce_to_the_same_basename(path):
+    from stack_bound.paths import base
+    assert base(path) == "a.c"           # a Windows build analysed on Linux CI, and the reverse
+
+
 # ---------------------------------------------------------------- parsers
 
 def test_su_parser_reads_windows_paths_and_refuses_bad_lines():
@@ -116,7 +122,7 @@ def test_passing_project_exits_zero_and_records_its_inputs(tmp_path, capsys):
     text = 'margin_rule = 0.9\n' + text
     rc, out, _ = run_cli(tmp_path, text, capsys)
     assert rc == 0
-    assert "stack_bound 0.1.0 | corpus.elf (sha256 " in out and "profile cortex-m-freertos v1" in out
+    assert "stack_bound 0.1.1 | corpus.elf (sha256 " in out and "profile cortex-m-freertos v1" in out
     assert "margin rule 0.90 [project]" in out
     assert "indirect verify -> crypto_mac: g_oracle.mac = crypto_mac (crypto.c)" in out
     assert "switch frame 208 B (FPU) / 72 B [profile cortex-m-freertos]" in out

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stack-bound"
-version = "0.1.0"
+version = "0.1.1"
 description = "Safe upper bound for every stack in an embedded firmware image"
 readme = "README.md"
 license = "MIT"

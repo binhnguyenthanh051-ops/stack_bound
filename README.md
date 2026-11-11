@@ -4,7 +4,7 @@ A **safe upper bound for every stack** in an embedded firmware image: each RTOS 
 the interrupt stack of each core. It works from the build's own output, shows the deepest path
 behind every number, and refuses to guess.
 
-> **Status: 0.1.0, slice 1.** Architecture accepted in [ADR-0001](docs/adr/ADR-0001-architecture.md).
+> **Status: 0.1.1, slice 1.** Architecture accepted in [ADR-0001](docs/adr/ADR-0001-architecture.md).
 > Works today: the ELF inventory and DWARF join, the GCC compiler witness (`.su`/`.ci`), function
 > pointers bound by a checked list, recursion refused, task stacks checked against the margin, and a
 > text report. Next: the binary witness (Thumb-2), value tracking, the interrupt stack, JSON/SARIF.

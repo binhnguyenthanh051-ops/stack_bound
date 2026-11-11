@@ -5,7 +5,7 @@ The ELF is the referee (ADR-0001 D1): every function comes from its symbol table
 from __future__ import annotations
 
 import hashlib
-import os
+from stack_bound.paths import base as path_base
 import struct
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -101,7 +101,7 @@ def _attach_decls(elf: ELFFile, image: Image) -> None:
             fidx = die.attributes.get("DW_AT_decl_file")
             fname = files.get(fidx.value, "") if fidx is not None else ""
             col = die.attributes["DW_AT_decl_column"].value if "DW_AT_decl_column" in die.attributes else 0
-            fn.decl = (os.path.basename(fname), die.attributes["DW_AT_decl_line"].value, col)
+            fn.decl = (path_base(fname), die.attributes["DW_AT_decl_line"].value, col)
 
 
 def _file_table(lineprog) -> dict[int, str]:
